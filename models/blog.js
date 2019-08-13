@@ -2,7 +2,11 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const BlogSchema = new Schema({
-  html: {
+  title: {
+    type: String,
+    required: [true, '标题不能为空']
+  },
+  content: {
     type: String,
     required: [true, '内容不能为空']
   }

@@ -29,47 +29,58 @@ router.post('/login', (req, res) => {
 
 // 获取文章列表
 router.get('/blog', (req, res) => {
+  const mdReg = /#+|`+|\*+/g;
   Blog.find({}).then(blogs => {
-    // console.log(blogs);
-    const titleReg = /<h[1-6]>\S+?<\/h[1-6]>/g;
-    blogs.map(blog => {
-      let title = '未命名';
-      if (blog.html.match(titleReg)) {
-        title = blog.html.match(titleReg)[0];
-      }
+    const blogList = blogs.map(blog => {
+      let des = blog.content.replace(mdReg, '').slice(0, 200) + '...';
+      return {
+        title: blog.title,
+        body: des,
+        id: blog._id
+      };
     });
-    res.send(blog);
+    console.log(blogList);
+    res.send(blogList);
   });
 });
 
 // 获取文章详情
 router.get('/blog/:id', (req, res) => {
-  res.send({
-    title: 'title',
-    body: 'sdnsidlgnsdglsndglgiilisnlgni'
+  Blog.findById(req.params.id).then(blog => {
+    res.send({
+      title: blog.title,
+      content: blog.content
+    });
   });
 });
 
 // 添加文章
 router.post('/blog', (req, res) => {
-  // Blog.create(req.body)
-  //   .then(blog => {
-  //     res.send(blog);
-  //   })
-  //   .catch(err => {
-  //     res.sendStatus(500);
-  //   });
-  res.send(req.body);
+  Blog.create(req.body)
+    .then(blog => {
+      console.log(blog);
+      res.send(blog);
+    })
+    .catch(err => {
+      res.sendStatus(500);
+    });
 });
 
 // 删除文章
 router.delete('/blog/:id', (req, res) => {
-  res.send('删除成功');
+  Blog.findOneAndDelete({ _id: req.params.id }).then(blog => {
+    console.log(blog);
+    res.send(blog);
+  });
 });
 
 // 编辑文章
 router.put('/blog/:id', (req, res) => {
-  res.send('更新成功' + req);
+  Blog.findByIdAndUpdate(req.params.id, req.body)
+    .then(blog => {
+      res.sendStatus(200);
+    })
+    .catch();
 });
 
 module.exports = router;
