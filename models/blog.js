@@ -9,8 +9,10 @@ const BlogSchema = new Schema({
   content: {
     type: String,
     required: [true, '内容不能为空']
-  }
+  },
+  time: String
 });
 
 const Blog = mongoose.model('myBlog', BlogSchema);
 module.exports = Blog;
+

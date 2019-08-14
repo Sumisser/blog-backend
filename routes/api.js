@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+
+const _ = require('lodash');
 const Blog = require('../models/blog');
 
 router.all('*', function(req, res, next) {
@@ -31,17 +33,37 @@ router.post('/login', (req, res) => {
 router.get('/blog', (req, res) => {
   const mdReg = /#+|`+|\*+/g;
   Blog.find({}).then(blogs => {
+    
+    // 总页数
+    let pages = Math.ceil(blogs.length / 3);
+
+    // 当前索引
+    let index = Number(req.query.index) || 1;
+    if (index > pages) {
+      index = pages;
+    } else if (index < 1) {
+      index = 1;
+    }
     const blogList = blogs.map(blog => {
       let des = blog.content.replace(mdReg, '').slice(0, 200) + '...';
       return {
         title: blog.title,
         body: des,
-        id: blog._id
+        id: blog._id,
+        time:blog.time
       };
+    }).sort((a,b) => {
+      return (Number(b.time) - Number(a.time))
+    })
+    const posts = blogList.length ?  _.chunk(blogList, 3)[index - 1]: [];
+    res.send({
+      pages,
+      index,
+      posts
     });
-    console.log(blogList);
-    res.send(blogList);
-  });
+  }).catch(err => {
+    res.sendStatus(500).send(err)
+  })
 });
 
 // 获取文章详情
@@ -51,14 +73,16 @@ router.get('/blog/:id', (req, res) => {
       title: blog.title,
       content: blog.content
     });
-  });
+  }).catch(err => {
+    res.sendStatus(404)
+  })
 });
 
 // 添加文章
 router.post('/blog', (req, res) => {
-  Blog.create(req.body)
+  const body = {...req.body,time:Date.now()}
+  Blog.create(body)
     .then(blog => {
-      console.log(blog);
       res.send(blog);
     })
     .catch(err => {
@@ -76,7 +100,8 @@ router.delete('/blog/:id', (req, res) => {
 
 // 编辑文章
 router.put('/blog/:id', (req, res) => {
-  Blog.findByIdAndUpdate(req.params.id, req.body)
+  const body = {...req.body,time:Date.now()}
+  Blog.findByIdAndUpdate(req.params.id, body)
     .then(blog => {
       res.sendStatus(200);
     })
