@@ -1,6 +1,10 @@
 const express = require('express');
-const routes = require('./routes/api');
 const mongoose = require('mongoose');
+
+const routes = require('./routes/api');
+const blogRoute = require('./routes/blog');
+const messageRoute = require('./routes/message');
+const loginRoute = require('./routes/login');
 
 var expressJwt = require('express-jwt');
 
@@ -16,18 +20,23 @@ app.use(
     secret: 'secret' //加密密钥，可换
   }).unless({
     path: [
-      { url: '/login', methods: ['POST'] },
+      '/login',
+      'login',
       { url: '/blog', methods: ['GET'] },
       { url: /^\/blog\/.*$/, methods: ['GET'] },
-      '/login',
-      
-    ] 
+      { url: '/message', methods: ['POST'] }
+    ]
   })
 );
 
 app.use(express.json());
 
 app.use(routes);
+app.use(loginRoute);
+app.use(blogRoute);
+app.use(messageRoute);
+
+console.log(routes.stack);
 
 app.listen(8080, () => {
   console.log('服务已启动');
